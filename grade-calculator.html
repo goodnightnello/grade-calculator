@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>성적 계산기</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; max-width: 900px; }
+    h1 { margin: 0 0 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+    label { display:block; font-weight: 600; margin: 10px 0 6px; }
+    textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; min-height: 90px; resize: vertical; box-sizing: border-box; }
+    button { padding: 12px 14px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    .btns { display:flex; gap: 10px; margin-top: 12px; }
+    .result { margin-top: 16px; padding: 14px; border-radius: 10px; background: #f6f7f9; }
+    .small { color: #666; font-size: 13px; margin-top: 8px; line-height: 1.4; }
+    .kv { display:flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+    .pill { background:#f3f4f6; border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+    .err { color: #b00020; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>성적 계산기</h1>
+
+  <div class="small">
+    환산: A=5.0, B=4.0, C=3.0, D=2.0, E=1.0<br/>
+    입력 예시: C,C,D,E 또는 c c d e 또는 줄바꿈 입력 가능<br/>
+    공식: 96 + 8.64*(2-1 평균) + 8.64*(2-2 평균) + 11.52*(3-1 평균)
+  </div>
+
+  <div class="row">
+
+    <div class="card">
+      <h3>2학년 1학기</h3>
+      <label>성적 입력 (A/B/C/D/E)</label>
+      <textarea id="in1" placeholder="예: C,C,D,E"></textarea>
+      <div class="kv">
+        <div class="pill">과목 수: <span id="n1">0</span></div>
+        <div class="pill">합계: <span id="a1">0.0</span></div>
+        <div class="pill">평균: <span id="avg1">-</span></div>
+      </div>
+      <div class="small err" id="err1"></div>
+    </div>
+
+    <div class="card">
+      <h3>2학년 2학기</h3>
+      <label>성적 입력 (A/B/C/D/E)</label>
+      <textarea id="in2" placeholder="예: A B B C"></textarea>
+      <div class="kv">
+        <div class="pill">과목 수: <span id="n2">0</span></div>
+        <div class="pill">합계: <span id="a2">0.0</span></div>
+        <div class="pill">평균: <span id="avg2">-</span></div>
+      </div>
+      <div class="small err" id="err2"></div>
+    </div>
+
+    <div class="card">
+      <h3>3학년 1학기</h3>
+      <label>성적 입력 (A/B/C/D/E)</label>
+      <textarea id="in3" placeholder="예: A&#10;C&#10;D"></textarea>
+      <div class="kv">
+        <div class="pill">과목 수: <span id="n3">0</span></div>
+        <div class="pill">합계: <span id="a3">0.0</span></div>
+        <div class="pill">평균: <span id="avg3">-</span></div>
+      </div>
+      <div class="small err" id="err3"></div>
+    </div>
+
+    <div class="card">
+      <h3>계산</h3>
+      <div class="btns">
+        <button onclick="calculate()">계산하기</button>
+        <button onclick="resetAll()">초기화</button>
+      </div>
+      <div class="result">
+        결과: <span id="out">-</span>
+      </div>
+      <div class="small">
+        주의: 비공식 계산기. 최종 기준은 기관/학교 공식을 따르세요.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const gradeMap = {A:5.0, B:4.0, C:3.0, D:2.0, E:1.0};
+
+    function parseGrades(text) {
+      const raw = (text || "").toUpperCase();
+      return raw.split(/[^A-E]+/g).filter(t => t.length > 0);
+    }
+
+    function compute(tag) {
+      const input = document.getElementById(`in${tag}`).value;
+      const tokens = parseGrades(input);
+
+      let sum = 0;
+      for (const t of tokens) sum += gradeMap[t];
+
+      const n = tokens.length;
+      const avg = n > 0 ? (sum / n) : null;
+
+      document.getElementById(`n${tag}`).textContent = n;
+      document.getElementById(`a${tag}`).textContent = sum.toFixed(1);
+      document.getElementById(`avg${tag}`).textContent = avg ? avg.toFixed(3) : "-";
+
+      return { n, sum };
+    }
+
+    [1,2,3].forEach(i => {
+      document.getElementById(`in${i}`).addEventListener("input", () => compute(i));
+      compute(i);
+    });
+
+    function calculate() {
+      const s1 = compute(1);
+      const s2 = compute(2);
+      const s3 = compute(3);
+
+      if (s1.n === 0 || s2.n === 0 || s3.n === 0) {
+        document.getElementById("out").textContent = "과목이 0개인 학기가 있습니다.";
+        return;
+      }
+
+      const result =
+        96 +
+        8.64 * (s1.sum / s1.n) +
+        8.64 * (s2.sum / s2.n) +
+        11.52 * (s3.sum / s3.n);
+
+      document.getElementById("out").textContent = result.toFixed(2);
+    }
+
+    function resetAll() {
+      [1,2,3].forEach(i => {
+        document.getElementById(`in${i}`).value = "";
+        compute(i);
+      });
+      document.getElementById("out").textContent = "-";
+    }
+  </script>
+</body>
+</html>
